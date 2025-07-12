@@ -1,2 +1,2 @@
 # mc-server
-1727-Minecraft服务器状态监控及ip
+17277-Minecraft服务器状态监控及ip
