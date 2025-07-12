@@ -3,29 +3,285 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>17277服务器状态监控</title>
+    <title>我的世界服务器状态监控</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
         body {
             background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
-            color: white; min-height: 100vh; padding: 20px;
-            display: flex; flex-direction: column; align-items: center;
-            background-size: 400% 400%; animation: gradientBG 15s ease infinite;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
         }
+        
         @keyframes gradientBG {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+        
         .container {
-            max-width: 800px; width: 100%; background: rgba(0, 0, 0, 0.7);
-            border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            margin: 20px 0; backdrop-filter: blur(10px);
+            max-width: 800px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
         }
-        header { text-align: center; margin-bottom: 30px; }
-        header h1 { font-size: 2.5rem; margin-bottom: 10px; color: #4CAF50; text-shadow: 0 0 15px rgba(76, 175, 80, 0.7); }
-        /* 完整样式见上面提供的代码，因长度限制这里省略重复样式 */
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #4CAF50;
+            text-shadow: 0 0 15px rgba(76, 175, 80, 0.7);
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .server-card {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .ip-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #4CAF50;
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            color: #4CAF50;
+        }
+        
+        .section-title i {
+            font-size: 1.8rem;
+        }
+        
+        .ip-display {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .ip-address {
+            font-size: 1.8rem;
+            font-family: 'Courier New', Courier, monospace;
+            word-break: break-all;
+            flex-grow: 1;
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border: 1px solid #4CAF50;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            background: linear-gradient(to right, #4CAF50, #2E7D32);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(to right, #43A047, #1B5E20);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .status-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .status-box {
+            flex: 1;
+            min-width: 250px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid;
+        }
+        
+        .status-box.online {
+            border-color: #4CAF50;
+        }
+        
+        .status-box.offline {
+            border-color: #F44336;
+        }
+        
+        .status-box.time {
+            border-color: #FFC107;
+        }
+        
+        .status-value {
+            font-size: 2rem;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .online .status-value {
+            color: #4CAF50;
+        }
+        
+        .offline .status-value {
+            color: #F44336;
+        }
+        
+        .time .status-value {
+            color: #FFC107;
+        }
+        
+        .status-label {
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+        
+        .info-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #2196F3;
+        }
+        
+        .schedule {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border-left: 4px solid #FFC107;
+        }
+        
+        .schedule h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #FFC107;
+            margin-bottom: 10px;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+        }
+        
+        .instructions ol {
+            padding-left: 25px;
+            margin: 15px 0;
+        }
+        
+        .instructions li {
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 152, 0, 0.2);
+            border-radius: 8px;
+            border-left: 4px solid #FF9800;
+        }
+        
+        .update-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .qrcode-container {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        .qrcode {
+            width: 180px;
+            height: 180px;
+            margin: 15px auto;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: black;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 600px) {
+            .ip-display {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .ip-address {
+                font-size: 1.4rem;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .status-value {
+                font-size: 1.6rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -36,16 +292,206 @@
         </header>
         
         <main class="server-card">
-            <!-- 完整HTML结构见上面提供的代码 -->
+            <section class="ip-section">
+                <h2 class="section-title"><i class="fas fa-network-wired"></i> 服务器连接地址</h2>
+                
+                <div class="ip-display">
+                    <div class="ip-address" id="ip-address">正在获取服务器地址...</div>
+                    <button class="btn" onclick="copyIP()">
+                        <i class="fas fa-copy"></i> 复制地址
+                    </button>
+                </div>
+                
+                <div class="update-info">
+                    <span>最后更新: <span id="update-time">--:--:--</span></span>
+                    <span>状态: <span id="update-status">获取中...</span></span>
+                </div>
+            </section>
+            
+            <div class="status-section">
+                <div class="status-box online" id="online-status">
+                    <h2 class="section-title"><i class="fas fa-signal"></i> 服务器状态</h2>
+                    <div class="status-value">检查中...</div>
+                    <div class="status-label" id="players-status">正在连接服务器</div>
+                </div>
+                
+                <div class="status-box time">
+                    <h2 class="section-title"><i class="fas fa-clock"></i> 开放时间</h2>
+                    <div class="status-value" id="time-status">计算中...</div>
+                    <div class="status-label" id="schedule-status">北京时间</div>
+                </div>
+            </div>
+            
+            <section class="info-section">
+                <h2 class="section-title"><i class="fas fa-info-circle"></i> 服务器信息</h2>
+                
+                <div class="schedule">
+                    <h3><i class="fas fa-calendar-alt"></i> 服务器开放时间表</h3>
+                    <p>此服务器每天在以下时间段开放：</p>
+                    <ul>
+                        <li><strong>开启时间：</strong>下午1点前后</li>
+                        <li><strong>关闭时间：</strong>晚上10点前后</li>
+                    </ul>
+                    <p>请注意：服务器可能会根据维护情况临时调整开放时间</p>
+                </div>
+                
+                <div class="instructions">
+                    <h3><i class="fas fa-gamepad"></i> 连接服务器指南</h3>
+                    <ol>
+                        <li>点击上方 <strong>"复制地址"</strong> 按钮</li>
+                        <li>打开 Minecraft 游戏</li>
+                        <li>进入"多人游戏" → "添加服务器"</li>
+                        <li>在"服务器地址"栏中粘贴复制的地址</li>
+                        <li>点击"完成"并连接服务器</li>
+                        <li>如果无法连接，请检查服务器是否在开放时间段内</li>
+                    </ol>
+                </div>
+                
+                <div class="note">
+                    <h3><i class="fas fa-exclamation-triangle"></i> 注意事项</h3>
+                    <p>服务器IP地址会定期自动更新，如果无法连接请刷新本页面获取最新地址。如果服务器状态显示"离线"，可能是服务器正在维护或未到开放时间。</p>
+                </div>
+            </section>
+            
+            <div class="qrcode-container">
+                <h3><i class="fas fa-mobile-alt"></i> 手机访问二维码</h3>
+                <p>扫描二维码在手机上查看服务器信息</p>
+                <div class="qrcode">
+                    <div style="text-align: center;">
+                        <i class="fas fa-qrcode" style="font-size: 4rem;"></i>
+                        <p>扫描访问</p>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
     
     <footer>
-        <p>服务器状态监控系统 &copy; 2023 | 自动更新每60秒</p>
+        <p>服务器状态监控系统 &copy; 2023 | 自动更新每300秒</p>
     </footer>
     
     <script>
-        // 完整JavaScript代码见上面提供的代码
+        // 页面元素
+        const ipAddressEl = document.getElementById('ip-address');
+        const updateTimeEl = document.getElementById('update-time');
+        const updateStatusEl = document.getElementById('update-status');
+        const onlineStatusEl = document.getElementById('online-status');
+        const playersStatusEl = document.getElementById('players-status');
+        const timeStatusEl = document.getElementById('time-status');
+        const scheduleStatusEl = document.getElementById('schedule-status');
+        
+        // 获取IP地址
+        async function fetchIP() {
+            try {
+                updateStatusEl.textContent = '获取中...';
+                
+                // 使用GitHub Pages路径获取ip.txt（添加时间戳避免缓存）
+                const response = await fetch('ip.txt?t=' + new Date().getTime());
+                
+                if (!response.ok) {
+                    throw new Error('文件获取失败');
+                }
+                
+                const ip = await response.text();
+                
+                // 显示IP地址
+                ipAddressEl.textContent = ip;
+                updateTimeEl.textContent = new Date().toLocaleTimeString();
+                updateStatusEl.textContent = '已更新';
+                
+                // 检查服务器状态
+                checkServerStatus(ip);
+                
+                // 更新开放时间状态
+                updateScheduleStatus();
+                
+            } catch (error) {
+                ipAddressEl.textContent = "⚠️ 获取服务器地址失败，请稍后刷新";
+                updateStatusEl.textContent = '更新失败';
+                onlineStatusEl.querySelector('.status-value').textContent = '离线';
+                playersStatusEl.textContent = '无法获取服务器状态';
+                onlineStatusEl.classList.add('offline');
+                onlineStatusEl.classList.remove('online');
+            }
+        }
+        
+        // 检查服务器状态
+        async function checkServerStatus(ip) {
+            try {
+                onlineStatusEl.querySelector('.status-value').textContent = '检查中...';
+                playersStatusEl.textContent = '正在连接服务器';
+                
+                // 从IP地址中提取纯IPv6地址（去除端口和方括号）
+                const cleanIP = ip.replace('[', '').replace(']', '').split(':')[0];
+                
+                // 使用第三方API检查服务器状态
+                const statusResponse = await fetch(`https://api.mcsrvstat.us/bedrock/2/${cleanIP}`);
+                
+                if (!statusResponse.ok) {
+                    throw new Error('状态API请求失败');
+                }
+                
+                const statusData = await statusResponse.json();
+                
+                if (statusData.online) {
+                    onlineStatusEl.querySelector('.status-value').textContent = '在线';
+                    playersStatusEl.innerHTML = `<i class="fas fa-users"></i> ${statusData.players.online} 位玩家在线`;
+                    onlineStatusEl.classList.add('online');
+                    onlineStatusEl.classList.remove('offline');
+                } else {
+                    onlineStatusEl.querySelector('.status-value').textContent = '离线';
+                    playersStatusEl.textContent = '服务器未响应';
+                    onlineStatusEl.classList.add('offline');
+                    onlineStatusEl.classList.remove('online');
+                }
+            } catch (e) {
+                onlineStatusEl.querySelector('.status-value').textContent = '未知';
+                playersStatusEl.textContent = '状态检测失败';
+                onlineStatusEl.classList.remove('online', 'offline');
+            }
+        }
+        
+        // 更新开放时间状态
+        function updateScheduleStatus() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            
+            timeStatusEl.textContent = `${hours}:${minutes}`;
+            
+            if (hours >= 13 && hours < 22) {
+                scheduleStatusEl.innerHTML = '<i class="fas fa-check-circle" style="color:#4CAF50"></i> 开放时间段内';
+            } else {
+                scheduleStatusEl.innerHTML = '<i class="fas fa-times-circle" style="color:#F44336"></i> 非开放时间段';
+            }
+        }
+        
+        // 复制IP地址功能
+        function copyIP() {
+            navigator.clipboard.writeText(ipAddressEl.textContent).then(() => {
+                const btn = document.querySelector('.btn');
+                const originalText = btn.innerHTML;
+                
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制!';
+                btn.style.background = 'linear-gradient(to right, #2E7D32, #1B5E20)';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = 'linear-gradient(to right, #4CAF50, #2E7D32)';
+                }, 2000);
+            }).catch(err => {
+                alert('复制失败，请手动选择复制');
+            });
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始获取IP
+            fetchIP();
+            
+            // 每300秒更新一次
+            setInterval(fetchIP, 300000);
+        });
     </script>
 </body>
 </html>
