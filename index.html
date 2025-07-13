@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minecraft 17277-服务器状态监控</title>
@@ -234,11 +237,54 @@
             gap: 10px;
         }
         
+        .lonely-player {
+            display: inline-block;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 20px;
+            padding: 5px 15px;
+            margin-top: 10px;
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,215,0,0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255,215,0,0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,215,0,0); }
+        }
+        
         footer {
             text-align: center;
             margin-top: 20px;
             opacity: 0.7;
             font-size: 0.9rem;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-indicator.online {
+            background-color: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+        
+        .status-indicator.offline {
+            background-color: #F44336;
+        }
+        
+        .status-indicator.checking {
+            background-color: #FFC107;
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
         }
         
         @media (max-width: 600px) {
@@ -282,7 +328,7 @@
                 
                 <div class="update-info">
                     <span>最后更新: <span id="update-time">--:--:--</span></span>
-                    <span>状态: <span id="update-status">获取中...</span></span>
+                    <span>状态: <span id="update-status"><span class="status-indicator checking"></span> 获取中...</span></span>
                 </div>
             </section>
             
@@ -291,6 +337,7 @@
                     <h2 class="section-title"><i class="fas fa-signal"></i> 服务器状态</h2>
                     <div class="status-value">检查中...</div>
                     <div class="status-label" id="players-status">正在连接服务器</div>
+                    <div id="lonely-message" style="display:none;"></div>
                 </div>
                 
                 <div class="status-box time">
@@ -328,6 +375,9 @@
                 <div class="note">
                     <h3><i class="fas fa-exclamation-triangle"></i> 注意事项</h3>
                     <p>服务器IP地址会定期自动更新，如果无法连接请刷新本页面获取最新地址。如果服务器状态显示"离线"，可能是服务器正在维护或未到开放时间。</p>
+                    <p style="margin-top: 10px; color: #FFC107;">
+                        <i class="fas fa-lightbulb"></i> <strong>提示：</strong> 如果状态检测失败，请尝试刷新页面。我们使用双重检测机制确保准确性。
+                    </p>
                 </div>
             </section>
         </main>
@@ -346,11 +396,13 @@
         const playersStatusEl = document.getElementById('players-status');
         const timeStatusEl = document.getElementById('time-status');
         const scheduleStatusEl = document.getElementById('schedule-status');
+        const lonelyMessageEl = document.getElementById('lonely-message');
+        const statusIndicator = document.querySelector('.status-indicator');
         
         // 获取IP地址
         async function fetchIP() {
             try {
-                updateStatusEl.textContent = '获取中...';
+                updateStatusEl.innerHTML = '<span class="status-indicator checking"></span> 获取中...';
                 
                 // 使用GitHub Pages路径获取ip.txt（添加时间戳避免缓存）
                 const response = await fetch('ip.txt?t=' + new Date().getTime());
@@ -364,35 +416,57 @@
                 // 显示IP地址
                 ipAddressEl.textContent = ip;
                 updateTimeEl.textContent = new Date().toLocaleTimeString();
-                updateStatusEl.textContent = '已更新';
+                updateStatusEl.innerHTML = '<span class="status-indicator online"></span> 已更新';
                 
                 // 检查服务器状态
-                checkServerStatus(ip);
+                await checkServerStatus(ip);
                 
                 // 更新开放时间状态
                 updateScheduleStatus();
                 
             } catch (error) {
+                console.error('获取IP地址失败:', error);
                 ipAddressEl.textContent = "⚠️ 获取服务器地址失败，请稍后刷新";
-                updateStatusEl.textContent = '更新失败';
+                updateStatusEl.innerHTML = '<span class="status-indicator offline"></span> 更新失败';
                 onlineStatusEl.querySelector('.status-value').textContent = '离线';
                 playersStatusEl.textContent = '无法获取服务器状态';
                 onlineStatusEl.classList.add('offline');
                 onlineStatusEl.classList.remove('online');
+                lonelyMessageEl.style.display = 'none';
             }
         }
         
-        // 检查服务器状态
+        // 检查服务器状态 - 改进版
         async function checkServerStatus(ip) {
             try {
                 onlineStatusEl.querySelector('.status-value').textContent = '检查中...';
                 playersStatusEl.textContent = '正在连接服务器';
+                lonelyMessageEl.style.display = 'none';
                 
                 // 从IP地址中提取纯IPv6地址（去除端口和方括号）
-                const cleanIP = ip.replace('[', '').replace(']', '').split(':')[0];
+                let cleanIP = ip;
                 
-                // 使用第三方API检查服务器状态
-                const statusResponse = await fetch(`https://api.mcsrvstat.us/bedrock/2/${cleanIP}`);
+                // 处理IPv6地址
+                if (ip.startsWith('[') && ip.includes(']')) {
+                    cleanIP = ip.substring(1, ip.indexOf(']'));
+                } 
+                // 处理IPv4地址
+                else if (ip.includes(':')) {
+                    cleanIP = ip.split(':')[0];
+                }
+                
+                // 使用更可靠的API端点
+                const apiUrl = `https://api.mcstatus.io/v2/status/bedrock/${encodeURIComponent(cleanIP)}`;
+                
+                // 添加超时处理
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const statusResponse = await fetch(apiUrl, {
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
                 
                 if (!statusResponse.ok) {
                     throw new Error('状态API请求失败');
@@ -402,7 +476,63 @@
                 
                 if (statusData.online) {
                     onlineStatusEl.querySelector('.status-value').textContent = '在线';
-                    playersStatusEl.innerHTML = `<i class="fas fa-users"></i> ${statusData.players.online} 位玩家在线`;
+                    
+                    // 显示玩家数量
+                    const playerCount = statusData.players.online;
+                    playersStatusEl.innerHTML = `<i class="fas fa-users"></i> ${playerCount} 位玩家在线`;
+                    
+                    // 如果只有一个玩家在线，显示孤独提示
+                    if (playerCount === 1) {
+                        lonelyMessageEl.innerHTML = `<div class="lonely-player"><i class="fas fa-user"></i> 这一个人很孤独的呢……</div>`;
+                        lonelyMessageEl.style.display = 'block';
+                    } else {
+                        lonelyMessageEl.style.display = 'none';
+                    }
+                    
+                    onlineStatusEl.classList.add('online');
+                    onlineStatusEl.classList.remove('offline');
+                } else {
+                    // 尝试备用检测方法
+                    await fallbackServerCheck(ip, cleanIP);
+                }
+            } catch (e) {
+                console.error('服务器状态检测失败:', e);
+                onlineStatusEl.querySelector('.status-value').textContent = '未知';
+                playersStatusEl.textContent = '状态检测失败';
+                onlineStatusEl.classList.remove('online', 'offline');
+                lonelyMessageEl.style.display = 'none';
+                
+                // 尝试备用检测方法
+                try {
+                    await fallbackServerCheck(ip, cleanIP);
+                } catch (fallbackError) {
+                    console.error('备用检测方法失败:', fallbackError);
+                }
+            }
+        }
+        
+        // 备用服务器检测方法
+        async function fallbackServerCheck(originalIP, cleanIP) {
+            try {
+                // 使用不同的API端点作为备用方案
+                const fallbackApiUrl = `https://api.mcsrvstat.us/bedrock/2/${encodeURIComponent(cleanIP)}`;
+                
+                const response = await fetch(fallbackApiUrl);
+                const data = await response.json();
+                
+                if (data.online) {
+                    onlineStatusEl.querySelector('.status-value').textContent = '在线';
+                    
+                    const playerCount = data.players ? data.players.online : 0;
+                    playersStatusEl.innerHTML = `<i class="fas fa-users"></i> ${playerCount} 位玩家在线`;
+                    
+                    if (playerCount === 1) {
+                        lonelyMessageEl.innerHTML = `<div class="lonely-player"><i class="fas fa-user"></i> 这一个人很孤独的呢……</div>`;
+                        lonelyMessageEl.style.display = 'block';
+                    } else {
+                        lonelyMessageEl.style.display = 'none';
+                    }
+                    
                     onlineStatusEl.classList.add('online');
                     onlineStatusEl.classList.remove('offline');
                 } else {
@@ -410,11 +540,15 @@
                     playersStatusEl.textContent = '服务器未响应';
                     onlineStatusEl.classList.add('offline');
                     onlineStatusEl.classList.remove('online');
+                    lonelyMessageEl.style.display = 'none';
                 }
-            } catch (e) {
-                onlineStatusEl.querySelector('.status-value').textContent = '未知';
-                playersStatusEl.textContent = '状态检测失败';
-                onlineStatusEl.classList.remove('online', 'offline');
+            } catch (error) {
+                console.error('备用检测方法失败:', error);
+                onlineStatusEl.querySelector('.status-value').textContent = '离线';
+                playersStatusEl.textContent = '服务器未响应';
+                onlineStatusEl.classList.add('offline');
+                onlineStatusEl.classList.remove('online');
+                lonelyMessageEl.style.display = 'none';
             }
         }
         
@@ -458,6 +592,14 @@
             
             // 每300秒更新一次
             setInterval(fetchIP, 300000);
+            
+            // 每60秒检查一次服务器状态
+            setInterval(() => {
+                const ip = ipAddressEl.textContent;
+                if (ip && !ip.includes('正在获取') && !ip.includes('失败')) {
+                    checkServerStatus(ip);
+                }
+            }, 60000);
         });
     </script>
 </body>
