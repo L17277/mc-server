@@ -485,18 +485,9 @@
                 apiStatusEl.textContent = '请求中...';
                 errorMessageEl.style.display = 'none';
                 
-                // 提取纯IPv6地址（不含端口）
-                // 格式: [2409:8a50:985a:90a0:dc3d:47fe:e1f8:8cdc]:25565
-                // 提取: [2409:8a50:985a:90a0:dc3d:47fe:e1f8:8cdc]
-                let cleanIP = ip;
-                if (ip.includes(']:')) {
-                    cleanIP = ip.split(']:')[0] + ']';
-                } else if (ip.includes(':')) {
-                    cleanIP = ip.split(':')[0];
-                }
-                
-                // 使用指定的API格式
-                const apiUrl = `https://api.mcsrvstat.us/simple/${cleanIP}`;
+                // 使用完整的IP地址（包含端口号）
+                const fullIP = ip.trim();
+                const apiUrl = `https://api.mcsrvstat.us/simple/${encodeURIComponent(fullIP)}`;
                 apiUrlEl.textContent = apiUrl;
                 apiTypeEl.textContent = 'mcsrvstat.us/simple';
                 
@@ -565,16 +556,9 @@
             try {
                 apiStatusEl.textContent = '尝试备选API...';
                 
-                // 提取纯IPv6地址（不含端口）
-                let cleanIP = ip;
-                if (ip.includes(']:')) {
-                    cleanIP = ip.split(']:')[0] + ']';
-                } else if (ip.includes(':')) {
-                    cleanIP = ip.split(':')[0];
-                }
-                
-                // 使用备选API格式
-                const altApiUrl = `https://api.mcsrvstat.us/bedrock/2/${cleanIP}`;
+                // 使用完整的IP地址（包含端口号）
+                const fullIP = ip.trim();
+                const altApiUrl = `https://api.mcsrvstat.us/bedrock/2/${encodeURIComponent(fullIP)}`;
                 apiUrlEl.textContent = altApiUrl;
                 apiTypeEl.textContent = 'mcsrvstat.us/bedrock/2';
                 
