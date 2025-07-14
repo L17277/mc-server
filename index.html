@@ -269,6 +269,22 @@
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,215,0,0); }
         }
         
+        .error-message {
+            background: rgba(244, 67, 54, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid #F44336;
+        }
+        
+        .error-message h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ffcdd2;
+            margin-bottom: 8px;
+        }
+        
         footer {
             text-align: center;
             margin-top: 20px;
@@ -324,6 +340,18 @@
                     <h3><i class="fas fa-code"></i> 当前API状态</h3>
                     <p>正在使用: <code id="api-url">https://api.mcsrvstat.us/simple/[Address]</code></p>
                     <p>响应状态: <span id="api-status">等待请求...</span></p>
+                </div>
+                
+                <div class="error-message" id="error-message" style="display: none;">
+                    <h3><i class="fas fa-exclamation-triangle"></i> API请求失败</h3>
+                    <p>原因: <span id="error-detail">未知错误</span></p>
+                    <p>解决方案: 
+                        <ul>
+                            <li>检查您的网络连接</li>
+                            <li>确保服务器地址格式正确</li>
+                            <li>尝试刷新页面</li>
+                        </ul>
+                    </p>
                 </div>
             </section>
             
@@ -391,12 +419,15 @@
         const lonelyMessageEl = document.getElementById('lonely-message');
         const apiUrlEl = document.getElementById('api-url');
         const apiStatusEl = document.getElementById('api-status');
+        const errorMessageEl = document.getElementById('error-message');
+        const errorDetailEl = document.getElementById('error-detail');
         
         // 获取IP地址
         async function fetchIP() {
             try {
                 updateStatusEl.textContent = '获取中...';
                 apiStatusEl.textContent = '等待请求...';
+                errorMessageEl.style.display = 'none';
                 
                 // 使用GitHub Pages路径获取ip.txt（添加时间戳避免缓存）
                 const response = await fetch('ip.txt?t=' + new Date().getTime());
@@ -427,6 +458,7 @@
                 onlineStatusEl.classList.remove('online');
                 lonelyMessageEl.style.display = 'none';
                 apiStatusEl.textContent = 'IP获取失败';
+                showError('无法获取服务器地址', error.message);
             }
         }
         
@@ -437,13 +469,15 @@
                 playersStatusEl.textContent = '正在连接服务器';
                 lonelyMessageEl.style.display = 'none';
                 apiStatusEl.textContent = '请求中...';
+                errorMessageEl.style.display = 'none';
                 
-                // 从IP地址中提取纯地址（保留方括号和端口）
+                // 从IP地址中提取纯地址（保留方括号）
                 // 确保格式为 [Address]:Port
                 const cleanIP = ip.trim();
                 
-                // 使用指定的API格式
-                const apiUrl = `https://api.mcsrvstat.us/simple/${encodeURIComponent(cleanIP)}`;
+                // 使用指定的API格式（移除端口部分）
+                const addressOnly = cleanIP.split(':')[0];
+                const apiUrl = `https://api.mcsrvstat.us/simple/${addressOnly}`;
                 apiUrlEl.textContent = apiUrl;
                 
                 // 使用第三方API检查服务器状态
@@ -455,6 +489,12 @@
                 }
                 
                 const statusData = await statusResponse.json();
+                
+                // 检查API返回的数据结构
+                if (statusData.online === undefined) {
+                    throw new Error('API返回无效数据');
+                }
+                
                 apiStatusEl.textContent = `成功 (在线: ${statusData.online})`;
                 
                 if (statusData.online) {
@@ -489,10 +529,18 @@
                 
                 if (e.message) {
                     apiStatusEl.textContent = `错误: ${e.message}`;
+                    showError('API请求失败', e.message);
                 } else {
                     apiStatusEl.textContent = 'API请求失败';
+                    showError('未知错误', '无法获取服务器状态');
                 }
             }
+        }
+        
+        // 显示错误信息
+        function showError(title, detail) {
+            errorDetailEl.textContent = detail;
+            errorMessageEl.style.display = 'block';
         }
         
         // 更新开放时间状态
