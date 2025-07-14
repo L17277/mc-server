@@ -285,6 +285,15 @@
             margin-bottom: 8px;
         }
         
+        .api-url {
+            word-break: break-all;
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            border-radius: 5px;
+            margin: 8px 0;
+            font-family: monospace;
+        }
+        
         footer {
             text-align: center;
             margin-top: 20px;
@@ -317,7 +326,7 @@
     <div class="container">
         <header>
             <h1><i class="fas fa-server"></i> Minecraft 17277-服务器状态监控</h1>
-            <p>使用 mcsrvstat.us API 获取服务器状态信息</p>
+            <p>实时获取服务器IP地址和状态信息</p>
         </header>
         
         <main class="server-card">
@@ -338,7 +347,10 @@
                 
                 <div class="api-info">
                     <h3><i class="fas fa-code"></i> 当前API状态</h3>
-                    <p>正在使用: <code id="api-url">https://api.mcsrvstat.us/simple/[Address]</code></p>
+                    <p>API类型: <span id="api-type">mcsrvstat.us/simple</span></p>
+                    <p>正在使用: 
+                        <div class="api-url" id="api-url">等待请求...</div>
+                    </p>
                     <p>响应状态: <span id="api-status">等待请求...</span></p>
                 </div>
                 
@@ -350,6 +362,7 @@
                             <li>检查您的网络连接</li>
                             <li>确保服务器地址格式正确</li>
                             <li>尝试刷新页面</li>
+                            <li>如果持续失败，请联系管理员</li>
                         </ul>
                     </p>
                 </div>
@@ -421,6 +434,7 @@
         const apiStatusEl = document.getElementById('api-status');
         const errorMessageEl = document.getElementById('error-message');
         const errorDetailEl = document.getElementById('error-detail');
+        const apiTypeEl = document.getElementById('api-type');
         
         // 获取IP地址
         async function fetchIP() {
@@ -471,21 +485,27 @@
                 apiStatusEl.textContent = '请求中...';
                 errorMessageEl.style.display = 'none';
                 
-                // 从IP地址中提取纯地址（保留方括号）
-                // 确保格式为 [Address]:Port
-                const cleanIP = ip.trim();
+                // 提取纯IPv6地址（不含端口）
+                // 格式: [2409:8a50:985a:90a0:dc3d:47fe:e1f8:8cdc]:25565
+                // 提取: [2409:8a50:985a:90a0:dc3d:47fe:e1f8:8cdc]
+                let cleanIP = ip;
+                if (ip.includes(']:')) {
+                    cleanIP = ip.split(']:')[0] + ']';
+                } else if (ip.includes(':')) {
+                    cleanIP = ip.split(':')[0];
+                }
                 
-                // 使用指定的API格式（移除端口部分）
-                const addressOnly = cleanIP.split(':')[0];
-                const apiUrl = `https://api.mcsrvstat.us/simple/${addressOnly}`;
+                // 使用指定的API格式
+                const apiUrl = `https://api.mcsrvstat.us/simple/${cleanIP}`;
                 apiUrlEl.textContent = apiUrl;
+                apiTypeEl.textContent = 'mcsrvstat.us/simple';
                 
                 // 使用第三方API检查服务器状态
                 const statusResponse = await fetch(apiUrl);
                 
                 if (!statusResponse.ok) {
                     apiStatusEl.textContent = `API错误: ${statusResponse.status}`;
-                    throw new Error('状态API请求失败');
+                    throw new Error(`API请求失败 (状态码: ${statusResponse.status})`);
                 }
                 
                 const statusData = await statusResponse.json();
@@ -534,12 +554,75 @@
                     apiStatusEl.textContent = 'API请求失败';
                     showError('未知错误', '无法获取服务器状态');
                 }
+                
+                // 尝试使用备选API
+                tryAlternativeAPI(ip);
+            }
+        }
+        
+        // 尝试备选API
+        async function tryAlternativeAPI(ip) {
+            try {
+                apiStatusEl.textContent = '尝试备选API...';
+                
+                // 提取纯IPv6地址（不含端口）
+                let cleanIP = ip;
+                if (ip.includes(']:')) {
+                    cleanIP = ip.split(']:')[0] + ']';
+                } else if (ip.includes(':')) {
+                    cleanIP = ip.split(':')[0];
+                }
+                
+                // 使用备选API格式
+                const altApiUrl = `https://api.mcsrvstat.us/bedrock/2/${cleanIP}`;
+                apiUrlEl.textContent = altApiUrl;
+                apiTypeEl.textContent = 'mcsrvstat.us/bedrock/2';
+                
+                // 使用备选API检查服务器状态
+                const statusResponse = await fetch(altApiUrl);
+                
+                if (!statusResponse.ok) {
+                    throw new Error(`备选API请求失败 (状态码: ${statusResponse.status})`);
+                }
+                
+                const statusData = await statusResponse.json();
+                
+                apiStatusEl.textContent = `备选API成功 (在线: ${statusData.online})`;
+                
+                if (statusData.online) {
+                    onlineStatusEl.querySelector('.status-value').textContent = '在线';
+                    
+                    // 显示玩家数量
+                    const playerCount = statusData.players?.online || 0;
+                    playersStatusEl.innerHTML = `<i class="fas fa-users"></i> ${playerCount} 位玩家在线`;
+                    
+                    // 如果只有一个玩家在线，显示孤独提示
+                    if (playerCount === 1) {
+                        lonelyMessageEl.innerHTML = `<div class="lonely-player"><i class="fas fa-user"></i> 这一个人很孤独的呢……</div>`;
+                        lonelyMessageEl.style.display = 'block';
+                    } else {
+                        lonelyMessageEl.style.display = 'none';
+                    }
+                    
+                    onlineStatusEl.classList.add('online');
+                    onlineStatusEl.classList.remove('offline');
+                } else {
+                    onlineStatusEl.querySelector('.status-value').textContent = '离线';
+                    playersStatusEl.textContent = '服务器未响应';
+                    onlineStatusEl.classList.add('offline');
+                    onlineStatusEl.classList.remove('online');
+                    lonelyMessageEl.style.display = 'none';
+                }
+            } catch (altError) {
+                apiStatusEl.textContent = `备选API失败: ${altError.message}`;
+                showError('备选API也失败', altError.message);
             }
         }
         
         // 显示错误信息
         function showError(title, detail) {
             errorDetailEl.textContent = detail;
+            errorMessageEl.querySelector('h3').innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${title}`;
             errorMessageEl.style.display = 'block';
         }
         
