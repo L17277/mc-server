@@ -247,17 +247,11 @@
             animation: pulse 2s infinite;
         }
         
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,215,0,0.4); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255,215,0,0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,215,0,0); }
-        }
-        
         .api-info {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(156, 39, 176, 0.2);
             border-radius: 10px;
             padding: 15px;
-            margin-top: 15px;
+            margin-top: 10px;
             border-left: 4px solid #9c27b0;
         }
         
@@ -265,8 +259,14 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            color: #9c27b0;
-            margin-bottom: 10px;
+            color: #e1bee7;
+            margin-bottom: 8px;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,215,0,0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255,215,0,0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,215,0,0); }
         }
         
         footer {
@@ -301,7 +301,7 @@
     <div class="container">
         <header>
             <h1><i class="fas fa-server"></i> Minecraft 17277-服务器状态监控</h1>
-            <p>实时获取服务器IP地址和状态信息</p>
+            <p>使用 mcsrvstat.us API 获取服务器状态信息</p>
         </header>
         
         <main class="server-card">
@@ -318,6 +318,12 @@
                 <div class="update-info">
                     <span>最后更新: <span id="update-time">--:--:--</span></span>
                     <span>状态: <span id="update-status">获取中...</span></span>
+                </div>
+                
+                <div class="api-info">
+                    <h3><i class="fas fa-code"></i> 当前API状态</h3>
+                    <p>正在使用: <code id="api-url">https://api.mcsrvstat.us/simple/[Address]</code></p>
+                    <p>响应状态: <span id="api-status">等待请求...</span></p>
                 </div>
             </section>
             
@@ -349,12 +355,6 @@
                     <p>请注意：服务器可能会根据维护情况临时调整开放时间</p>
                 </div>
                 
-                <div class="api-info">
-                    <h3><i class="fas fa-plug"></i> 状态检测API</h3>
-                    <p>当前使用API端点: <code>https://api.mcsrvstat.us/simple/[IP]:端口</code></p>
-                    <p>此API会检查服务器状态并返回SVG状态图标</p>
-                </div>
-                
                 <div class="instructions">
                     <h3><i class="fas fa-gamepad"></i> 连接服务器指南</h3>
                     <ol>
@@ -376,7 +376,7 @@
     </div>
     
     <footer>
-        <p>服务器状态监控系统 &copy; 2023 | 自动更新每300秒</p>
+        <p>服务器状态监控系统 &copy; 2023 | 使用 mcsrvstat.us API | 自动更新每300秒</p>
     </footer>
     
     <script>
@@ -389,11 +389,14 @@
         const timeStatusEl = document.getElementById('time-status');
         const scheduleStatusEl = document.getElementById('schedule-status');
         const lonelyMessageEl = document.getElementById('lonely-message');
+        const apiUrlEl = document.getElementById('api-url');
+        const apiStatusEl = document.getElementById('api-status');
         
         // 获取IP地址
         async function fetchIP() {
             try {
                 updateStatusEl.textContent = '获取中...';
+                apiStatusEl.textContent = '等待请求...';
                 
                 // 使用GitHub Pages路径获取ip.txt（添加时间戳避免缓存）
                 const response = await fetch('ip.txt?t=' + new Date().getTime());
@@ -423,37 +426,54 @@
                 onlineStatusEl.classList.add('offline');
                 onlineStatusEl.classList.remove('online');
                 lonelyMessageEl.style.display = 'none';
+                apiStatusEl.textContent = 'IP获取失败';
             }
         }
         
-        // 检查服务器状态
+        // 检查服务器状态 - 使用指定的API格式
         async function checkServerStatus(ip) {
             try {
                 onlineStatusEl.querySelector('.status-value').textContent = '检查中...';
                 playersStatusEl.textContent = '正在连接服务器';
                 lonelyMessageEl.style.display = 'none';
+                apiStatusEl.textContent = '请求中...';
                 
-                // 保留方括号和端口
-                const serverAddress = ip;
+                // 从IP地址中提取纯地址（保留方括号和端口）
+                // 确保格式为 [Address]:Port
+                const cleanIP = ip.trim();
                 
-                // 使用新的API端点（保留方括号和端口）
-                const apiUrl = `https://api.mcsrvstat.us/simple/${serverAddress}`;
+                // 使用指定的API格式
+                const apiUrl = `https://api.mcsrvstat.us/simple/${encodeURIComponent(cleanIP)}`;
+                apiUrlEl.textContent = apiUrl;
+                
+                // 使用第三方API检查服务器状态
                 const statusResponse = await fetch(apiUrl);
                 
-                // 检查响应状态码
-                if (statusResponse.status === 200) {
+                if (!statusResponse.ok) {
+                    apiStatusEl.textContent = `API错误: ${statusResponse.status}`;
+                    throw new Error('状态API请求失败');
+                }
+                
+                const statusData = await statusResponse.json();
+                apiStatusEl.textContent = `成功 (在线: ${statusData.online})`;
+                
+                if (statusData.online) {
                     onlineStatusEl.querySelector('.status-value').textContent = '在线';
-                    playersStatusEl.innerHTML = `<i class="fas fa-users"></i> 服务器在线`;
-                    onlineStatusEl.classList.add('online');
-                    onlineStatusEl.classList.remove('offline');
                     
-                    // 添加一个模拟的玩家数量（实际API不返回玩家数量）
-                    const playerCount = Math.floor(Math.random() * 5); // 随机0-4个玩家
+                    // 显示玩家数量
+                    const playerCount = statusData.players || 0;
+                    playersStatusEl.innerHTML = `<i class="fas fa-users"></i> ${playerCount} 位玩家在线`;
                     
+                    // 如果只有一个玩家在线，显示孤独提示
                     if (playerCount === 1) {
                         lonelyMessageEl.innerHTML = `<div class="lonely-player"><i class="fas fa-user"></i> 这一个人很孤独的呢……</div>`;
                         lonelyMessageEl.style.display = 'block';
+                    } else {
+                        lonelyMessageEl.style.display = 'none';
                     }
+                    
+                    onlineStatusEl.classList.add('online');
+                    onlineStatusEl.classList.remove('offline');
                 } else {
                     onlineStatusEl.querySelector('.status-value').textContent = '离线';
                     playersStatusEl.textContent = '服务器未响应';
@@ -466,7 +486,12 @@
                 playersStatusEl.textContent = '状态检测失败';
                 onlineStatusEl.classList.remove('online', 'offline');
                 lonelyMessageEl.style.display = 'none';
-                console.error('状态检测错误:', e);
+                
+                if (e.message) {
+                    apiStatusEl.textContent = `错误: ${e.message}`;
+                } else {
+                    apiStatusEl.textContent = 'API请求失败';
+                }
             }
         }
         
