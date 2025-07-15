@@ -6,7 +6,7 @@
     <meta http-equiv="Expires" content="0">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft 17277-服务器状态监控</title>
+    <title>Minecraft 17277-服务器IP地址</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -132,101 +132,6 @@
             transform: translateY(1px);
         }
         
-        .status-section {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        
-        .status-box {
-            flex: 1;
-            min-width: 250px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 20px;
-            border: 2px solid;
-        }
-        
-        .status-box.online {
-            border-color: #4CAF50;
-        }
-        
-        .status-box.offline {
-            border-color: #F44336;
-        }
-        
-        .status-box.time {
-            border-color: #FFC107;
-        }
-        
-        .status-value {
-            font-size: 2rem;
-            margin: 10px 0;
-            font-weight: bold;
-        }
-        
-        .online .status-value {
-            color: #4CAF50;
-        }
-        
-        .offline .status-value {
-            color: #F44336;
-        }
-        
-        .time .status-value {
-            color: #FFC107;
-        }
-        
-        .status-label {
-            opacity: 0.8;
-            font-size: 1.1rem;
-        }
-        
-        .info-section {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 20px;
-            border: 2px solid #2196F3;
-        }
-        
-        .schedule {
-            margin: 15px 0;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            border-left: 4px solid #FFC107;
-        }
-        
-        .schedule h3 {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #FFC107;
-            margin-bottom: 10px;
-        }
-        
-        .instructions {
-            margin-top: 20px;
-        }
-        
-        .instructions ol {
-            padding-left: 25px;
-            margin: 15px 0;
-        }
-        
-        .instructions li {
-            margin-bottom: 12px;
-            line-height: 1.6;
-        }
-        
-        .note {
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(255, 152, 0, 0.2);
-            border-radius: 8px;
-            border-left: 4px solid #FF9800;
-        }
-        
         .update-info {
             display: flex;
             justify-content: space-between;
@@ -235,38 +140,6 @@
             opacity: 0.8;
             flex-wrap: wrap;
             gap: 10px;
-        }
-        
-        .lonely-player {
-            display: inline-block;
-            background: rgba(255, 215, 0, 0.2);
-            border-radius: 20px;
-            padding: 5px 15px;
-            margin-top: 10px;
-            border: 1px solid rgba(255, 215, 0, 0.5);
-            animation: pulse 2s infinite;
-        }
-        
-        .api-info {
-            background: rgba(156, 39, 176, 0.2);
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 10px;
-            border-left: 4px solid #9c27b0;
-        }
-        
-        .api-info h3 {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #e1bee7;
-            margin-bottom: 8px;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,215,0,0.4); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255,215,0,0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,215,0,0); }
         }
         
         .error-message {
@@ -285,13 +158,22 @@
             margin-bottom: 8px;
         }
         
-        .api-url {
-            word-break: break-all;
-            background: rgba(0,0,0,0.3);
-            padding: 8px;
-            border-radius: 5px;
-            margin: 8px 0;
-            font-family: monospace;
+        .detail-link {
+            display: block;
+            margin-top: 15px;
+            color: #4CAF50;
+            text-decoration: none;
+            font-size: 1.1rem;
+            transition: color 0.3s;
+        }
+        
+        .detail-link:hover {
+            color: #2E7D32;
+            text-decoration: underline;
+        }
+        
+        .detail-link i {
+            margin-right: 8px;
         }
         
         footer {
@@ -315,18 +197,14 @@
                 width: 100%;
                 justify-content: center;
             }
-            
-            .status-value {
-                font-size: 1.6rem;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-server"></i> Minecraft 17277-服务器状态监控</h1>
-            <p>实时获取服务器IP地址和状态信息</p>
+            <h1><i class="fas fa-server"></i> Minecraft 17277-服务器IP地址</h1>
+            <p>获取服务器连接地址</p>
         </header>
         
         <main class="server-card">
@@ -340,27 +218,21 @@
                     </button>
                 </div>
                 
+                <a href="#" id="detail-link" class="detail-link" target="_blank">
+                    <i class="fas fa-external-link-alt"></i> 查询服务器详情
+                </a>
+                
                 <div class="update-info">
                     <span>最后更新: <span id="update-time">--:--:--</span></span>
                     <span>状态: <span id="update-status">获取中...</span></span>
                 </div>
                 
-                <div class="api-info">
-                    <h3><i class="fas fa-code"></i> 当前API状态</h3>
-                    <p>API类型: <span id="api-type">mcsrvstat.us/simple</span></p>
-                    <p>正在使用: 
-                        <div class="api-url" id="api-url">等待请求...</div>
-                    </p>
-                    <p>响应状态: <span id="api-status">等待请求...</span></p>
-                </div>
-                
                 <div class="error-message" id="error-message" style="display: none;">
-                    <h3><i class="fas fa-exclamation-triangle"></i> API请求失败</h3>
+                    <h3><i class="fas fa-exclamation-triangle"></i> 获取IP失败</h3>
                     <p>原因: <span id="error-detail">未知错误</span></p>
                     <p>解决方案: 
                         <ul>
                             <li>检查您的网络连接</li>
-                            <li>确保服务器地址格式正确</li>
                             <li>尝试刷新页面</li>
                             <li>如果持续失败，请联系管理员</li>
                         </ul>
@@ -368,56 +240,30 @@
                 </div>
             </section>
             
-            <div class="status-section">
-                <div class="status-box online" id="online-status">
-                    <h2 class="section-title"><i class="fas fa-signal"></i> 服务器状态</h2>
-                    <div class="status-value">检查中...</div>
-                    <div class="status-label" id="players-status">正在连接服务器</div>
-                    <div id="lonely-message" style="display:none;"></div>
-                </div>
-                
-                <div class="status-box time">
-                    <h2 class="section-title"><i class="fas fa-clock"></i> 开放时间</h2>
-                    <div class="status-value" id="time-status">计算中...</div>
-                    <div class="status-label" id="schedule-status">北京时间</div>
-                </div>
-            </div>
-            
             <section class="info-section">
-                <h2 class="section-title"><i class="fas fa-info-circle"></i> 服务器信息</h2>
-                
-                <div class="schedule">
-                    <h3><i class="fas fa-calendar-alt"></i> 服务器开放时间表</h3>
-                    <p>此服务器每天在以下时间段开放：</p>
-                    <ul>
-                        <li><strong>开启时间：</strong>下午1点前后</li>
-                        <li><strong>关闭时间：</strong>晚上10点前后</li>
-                    </ul>
-                    <p>请注意：服务器可能会根据维护情况临时调整开放时间</p>
-                </div>
+                <h2 class="section-title"><i class="fas fa-info-circle"></i> 连接指南</h2>
                 
                 <div class="instructions">
-                    <h3><i class="fas fa-gamepad"></i> 连接服务器指南</h3>
                     <ol>
                         <li>点击上方 <strong>"复制地址"</strong> 按钮</li>
                         <li>打开 Minecraft 游戏</li>
                         <li>进入"多人游戏" → "添加服务器"</li>
                         <li>在"服务器地址"栏中粘贴复制的地址</li>
                         <li>点击"完成"并连接服务器</li>
-                        <li>如果无法连接，请检查服务器是否在开放时间段内</li>
                     </ol>
                 </div>
                 
                 <div class="note">
                     <h3><i class="fas fa-exclamation-triangle"></i> 注意事项</h3>
-                    <p>服务器IP地址会定期自动更新，如果无法连接请刷新本页面获取最新地址。如果服务器状态显示"离线"，可能是服务器正在维护或未到开放时间。</p>
+                    <p>服务器IP地址会定期自动更新，如果无法连接请刷新本页面获取最新地址。</p>
+                    <p><strong>基岩版玩家请注意：</strong>请使用端口19132连接服务器。</p>
                 </div>
             </section>
         </main>
     </div>
     
     <footer>
-        <p>服务器状态监控系统 &copy; 2023 | 使用 mcsrvstat.us API | 自动更新每300秒</p>
+        <p>服务器IP提供系统 &copy; 2023 | 自动更新每300秒</p>
     </footer>
     
     <script>
@@ -425,22 +271,14 @@
         const ipAddressEl = document.getElementById('ip-address');
         const updateTimeEl = document.getElementById('update-time');
         const updateStatusEl = document.getElementById('update-status');
-        const onlineStatusEl = document.getElementById('online-status');
-        const playersStatusEl = document.getElementById('players-status');
-        const timeStatusEl = document.getElementById('time-status');
-        const scheduleStatusEl = document.getElementById('schedule-status');
-        const lonelyMessageEl = document.getElementById('lonely-message');
-        const apiUrlEl = document.getElementById('api-url');
-        const apiStatusEl = document.getElementById('api-status');
         const errorMessageEl = document.getElementById('error-message');
         const errorDetailEl = document.getElementById('error-detail');
-        const apiTypeEl = document.getElementById('api-type');
+        const detailLinkEl = document.getElementById('detail-link');
         
         // 获取IP地址
         async function fetchIP() {
             try {
                 updateStatusEl.textContent = '获取中...';
-                apiStatusEl.textContent = '等待请求...';
                 errorMessageEl.style.display = 'none';
                 
                 // 使用GitHub Pages路径获取ip.txt（添加时间戳避免缓存）
@@ -457,171 +295,15 @@
                 updateTimeEl.textContent = new Date().toLocaleTimeString();
                 updateStatusEl.textContent = '已更新';
                 
-                // 检查服务器状态
-                checkServerStatus(ip);
-                
-                // 更新开放时间状态
-                updateScheduleStatus();
+                // 设置查询详情链接
+                detailLinkEl.href = `https://mcsrvstat.us/server/${encodeURIComponent(ip.trim())}`;
                 
             } catch (error) {
                 ipAddressEl.textContent = "⚠️ 获取服务器地址失败，请稍后刷新";
                 updateStatusEl.textContent = '更新失败';
-                onlineStatusEl.querySelector('.status-value').textContent = '离线';
-                playersStatusEl.textContent = '无法获取服务器状态';
-                onlineStatusEl.classList.add('offline');
-                onlineStatusEl.classList.remove('online');
-                lonelyMessageEl.style.display = 'none';
-                apiStatusEl.textContent = 'IP获取失败';
-                showError('无法获取服务器地址', error.message);
-            }
-        }
-        
-        // 检查服务器状态 - 使用指定的API格式
-        async function checkServerStatus(ip) {
-            try {
-                onlineStatusEl.querySelector('.status-value').textContent = '检查中...';
-                playersStatusEl.textContent = '正在连接服务器';
-                lonelyMessageEl.style.display = 'none';
-                apiStatusEl.textContent = '请求中...';
-                errorMessageEl.style.display = 'none';
-                
-                // 使用完整的IP地址（包含端口号）
-                const fullIP = ip.trim();
-                const apiUrl = `https://api.mcsrvstat.us/simple/${encodeURIComponent(fullIP)}`;
-                apiUrlEl.textContent = apiUrl;
-                apiTypeEl.textContent = 'mcsrvstat.us/simple';
-                
-                // 使用第三方API检查服务器状态
-                const statusResponse = await fetch(apiUrl);
-                
-                if (!statusResponse.ok) {
-                    apiStatusEl.textContent = `API错误: ${statusResponse.status}`;
-                    throw new Error(`API请求失败 (状态码: ${statusResponse.status})`);
-                }
-                
-                const statusData = await statusResponse.json();
-                
-                // 检查API返回的数据结构
-                if (statusData.online === undefined) {
-                    throw new Error('API返回无效数据');
-                }
-                
-                apiStatusEl.textContent = `成功 (在线: ${statusData.online})`;
-                
-                if (statusData.online) {
-                    onlineStatusEl.querySelector('.status-value').textContent = '在线';
-                    
-                    // 显示玩家数量
-                    const playerCount = statusData.players || 0;
-                    playersStatusEl.innerHTML = `<i class="fas fa-users"></i> ${playerCount} 位玩家在线`;
-                    
-                    // 如果只有一个玩家在线，显示孤独提示
-                    if (playerCount === 1) {
-                        lonelyMessageEl.innerHTML = `<div class="lonely-player"><i class="fas fa-user"></i> 这一个人很孤独的呢……</div>`;
-                        lonelyMessageEl.style.display = 'block';
-                    } else {
-                        lonelyMessageEl.style.display = 'none';
-                    }
-                    
-                    onlineStatusEl.classList.add('online');
-                    onlineStatusEl.classList.remove('offline');
-                } else {
-                    onlineStatusEl.querySelector('.status-value').textContent = '离线';
-                    playersStatusEl.textContent = '服务器未响应';
-                    onlineStatusEl.classList.add('offline');
-                    onlineStatusEl.classList.remove('online');
-                    lonelyMessageEl.style.display = 'none';
-                }
-            } catch (e) {
-                onlineStatusEl.querySelector('.status-value').textContent = '未知';
-                playersStatusEl.textContent = '状态检测失败';
-                onlineStatusEl.classList.remove('online', 'offline');
-                lonelyMessageEl.style.display = 'none';
-                
-                if (e.message) {
-                    apiStatusEl.textContent = `错误: ${e.message}`;
-                    showError('API请求失败', e.message);
-                } else {
-                    apiStatusEl.textContent = 'API请求失败';
-                    showError('未知错误', '无法获取服务器状态');
-                }
-                
-                // 尝试使用备选API
-                tryAlternativeAPI(ip);
-            }
-        }
-        
-        // 尝试备选API
-        async function tryAlternativeAPI(ip) {
-            try {
-                apiStatusEl.textContent = '尝试备选API...';
-                
-                // 使用完整的IP地址（包含端口号）
-                const fullIP = ip.trim();
-                const altApiUrl = `https://api.mcsrvstat.us/bedrock/2/${encodeURIComponent(fullIP)}`;
-                apiUrlEl.textContent = altApiUrl;
-                apiTypeEl.textContent = 'mcsrvstat.us/bedrock/2';
-                
-                // 使用备选API检查服务器状态
-                const statusResponse = await fetch(altApiUrl);
-                
-                if (!statusResponse.ok) {
-                    throw new Error(`备选API请求失败 (状态码: ${statusResponse.status})`);
-                }
-                
-                const statusData = await statusResponse.json();
-                
-                apiStatusEl.textContent = `备选API成功 (在线: ${statusData.online})`;
-                
-                if (statusData.online) {
-                    onlineStatusEl.querySelector('.status-value').textContent = '在线';
-                    
-                    // 显示玩家数量
-                    const playerCount = statusData.players?.online || 0;
-                    playersStatusEl.innerHTML = `<i class="fas fa-users"></i> ${playerCount} 位玩家在线`;
-                    
-                    // 如果只有一个玩家在线，显示孤独提示
-                    if (playerCount === 1) {
-                        lonelyMessageEl.innerHTML = `<div class="lonely-player"><i class="fas fa-user"></i> 这一个人很孤独的呢……</div>`;
-                        lonelyMessageEl.style.display = 'block';
-                    } else {
-                        lonelyMessageEl.style.display = 'none';
-                    }
-                    
-                    onlineStatusEl.classList.add('online');
-                    onlineStatusEl.classList.remove('offline');
-                } else {
-                    onlineStatusEl.querySelector('.status-value').textContent = '离线';
-                    playersStatusEl.textContent = '服务器未响应';
-                    onlineStatusEl.classList.add('offline');
-                    onlineStatusEl.classList.remove('online');
-                    lonelyMessageEl.style.display = 'none';
-                }
-            } catch (altError) {
-                apiStatusEl.textContent = `备选API失败: ${altError.message}`;
-                showError('备选API也失败', altError.message);
-            }
-        }
-        
-        // 显示错误信息
-        function showError(title, detail) {
-            errorDetailEl.textContent = detail;
-            errorMessageEl.querySelector('h3').innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${title}`;
-            errorMessageEl.style.display = 'block';
-        }
-        
-        // 更新开放时间状态
-        function updateScheduleStatus() {
-            const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            
-            timeStatusEl.textContent = `${hours}:${minutes}`;
-            
-            if (hours >= 13 && hours < 22) {
-                scheduleStatusEl.innerHTML = '<i class="fas fa-check-circle" style="color:#4CAF50"></i> 开放时间段内';
-            } else {
-                scheduleStatusEl.innerHTML = '<i class="fas fa-times-circle" style="color:#F44336"></i> 非开放时间段';
+                errorDetailEl.textContent = error.message;
+                errorMessageEl.style.display = 'block';
+                detailLinkEl.style.display = 'none';
             }
         }
         
