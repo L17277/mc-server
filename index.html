@@ -288,7 +288,8 @@
                     throw new Error('文件获取失败');
                 }
                 
-                const ip = await response.text();
+                // 获取IP并去除前后空格
+                const ip = (await response.text()).trim();
                 
                 // 显示IP地址
                 ipAddressEl.textContent = ip;
@@ -296,7 +297,7 @@
                 updateStatusEl.textContent = '已更新';
                 
                 // 设置查询详情链接
-                detailLinkEl.href = `https://mcsrvstat.us/server/${encodeURIComponent(ip.trim())}`;
+                detailLinkEl.href = `https://mcsrvstat.us/server/${encodeURIComponent(ip)}`;
                 
             } catch (error) {
                 ipAddressEl.textContent = "⚠️ 获取服务器地址失败，请稍后刷新";
@@ -309,7 +310,13 @@
         
         // 复制IP地址功能
         function copyIP() {
-            navigator.clipboard.writeText(ipAddressEl.textContent).then(() => {
+            const ip = ipAddressEl.textContent;
+            if(ip === "正在获取服务器地址..." || ip.startsWith("⚠️")) {
+                alert('当前没有有效的IP地址可复制');
+                return;
+            }
+            
+            navigator.clipboard.writeText(ip).then(() => {
                 const btn = document.querySelector('.btn');
                 const originalText = btn.innerHTML;
                 
